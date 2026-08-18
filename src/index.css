@@ -59,6 +59,8 @@
   min-width: 1440px !important;
   max-width: 1440px !important;
   background-color: #FFFFFF !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
 }
 
 .export-landscape-mode #category-cards-grid {
@@ -69,9 +71,21 @@
 }
 
 .export-landscape-mode main {
-  width: 1440px !important;
-  max-width: 1440px !important;
-  padding-left: 24px !important;
-  padding-right: 24px !important;
+  width: 1392px !important;
+  max-width: 1392px !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+}
+
+.export-only {
+  display: none;
+}
+
+.export-landscape-mode .export-only {
+  display: block !important;
+}
+
+.export-landscape-mode .screen-only {
+  display: none !important;
 }
 

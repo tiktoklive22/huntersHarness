@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ShiftType } from '../types';
-import { SHIFT_OPTIONS, ddmmYYYYToISO, isoToDDMMYYYY, getShiftWindowLabel, getCurrentShiftAndDate } from '../utils/dateUtils';
+import {
+  SHIFT_OPTIONS,
+  ddmmYYYYToISO,
+  isoToDDMMYYYY,
+  getShiftWindowLabel,
+  getCurrentShiftAndDate,
+  getShiftDisplayName,
+} from '../utils/dateUtils';
 import { Calendar, Clock, Sparkles, Activity, Layers, Hash } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,7 +28,6 @@ export const Header: React.FC<HeaderProps> = ({
   onSetCurrentShift,
 }) => {
   const [liveTime, setLiveTime] = useState<string>('');
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -46,22 +52,22 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           
-          {/* Brand & Industrial Title */}
+          {/* Brand & Complete Industrial Title (Full title always visible, never truncated) */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-xs text-white">
-              <Layers className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-xs text-white shrink-0">
+              <Layers className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-wider text-black font-industrial">
-                  KSK AREA
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black tracking-wider text-black font-industrial whitespace-normal">
+                  KSK AREA – HARNESS / HT FOLLOW UP
                 </h1>
-                <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-blue-50 text-blue-700 border border-blue-200 rounded">
+                <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-blue-50 text-blue-700 border border-blue-200 rounded whitespace-nowrap">
                   Live Follow Up
                 </span>
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-slate-600 flex items-center gap-2">
-                <span>HARNESS / HT FOLLOW UP</span>
+              <p className="text-xs sm:text-sm font-semibold text-slate-600 flex items-center gap-2 mt-0.5">
+                <span>PRODUCTION TRACKING SYSTEM</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 inline-block" />
                 <span className="text-slate-700 text-xs font-mono font-medium">{liveTime}</span>
               </p>
@@ -110,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 {SHIFT_OPTIONS.map((opt) => (
                   <option key={opt} value={opt} className="bg-white text-slate-900">
-                    {opt}
+                    {getShiftDisplayName(opt)}
                   </option>
                 ))}
               </select>
@@ -120,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="btn-current-shift"
               onClick={onSetCurrentShift}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer ${
                 isCurrentActive
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                   : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 hover:text-black'

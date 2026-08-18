@@ -218,7 +218,7 @@ export function getStoredDisplayMode(): 'vertical' | 'oneline' {
     const raw = localStorage.getItem(STORAGE_KEY_DISPLAY_MODE);
     if (raw === 'vertical' || raw === 'oneline') return raw;
   } catch (e) {}
-  return 'vertical';
+  return 'oneline';
 }
 
 export function saveStoredDisplayMode(mode: 'vertical' | 'oneline'): void {

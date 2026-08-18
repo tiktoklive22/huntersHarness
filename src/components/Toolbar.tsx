@@ -60,17 +60,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <span>+ ADD KSK</span>
         </button>
 
-        {/* + ADD CATEGORY */}
+        {/* + ADD EMPLACEMENT */}
         <button
           id="btn-add-category"
           onClick={onOpenAddCategory}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 transition-all active:scale-95 cursor-pointer shadow-2xs"
+          title="Create a new tracking emplacement column"
         >
           <FolderPlus className="w-4 h-4 text-emerald-600" />
-          <span>+ Add Category</span>
+          <span>+ Add Emplacement</span>
         </button>
 
-        {/* Category Filter */}
+        {/* Emplacement Filter */}
         <div className="flex items-center bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 shadow-2xs">
           <Filter className="w-3.5 h-3.5 text-slate-500 mr-1.5 shrink-0" />
           <select
@@ -79,7 +80,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             onChange={(e) => onCategoryFilterChange(e.target.value)}
             className="bg-transparent text-xs text-slate-900 font-bold focus:outline-none cursor-pointer"
           >
-            <option value="ALL" className="bg-white text-slate-900">All Categories ({categories.length})</option>
+            <option value="ALL" className="bg-white text-slate-900">All Emplacements ({categories.length})</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id} className="bg-white text-slate-900">
                 {cat.name}

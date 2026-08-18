@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Category, DisplayMode, KSKItem, ShiftType, ToastMessage } from './types';
 import {
   getStoredCategories,
@@ -12,7 +12,7 @@ import {
   getStoredActiveShift,
   saveStoredActiveShift,
 } from './utils/storage';
-import { getCurrentShiftAndDate, SHIFT_OPTIONS, getShiftWindowLabel } from './utils/dateUtils';
+import { getCurrentShiftAndDate, getShiftDisplayName } from './utils/dateUtils';
 import { exportDashboardToPng } from './utils/exportUtils';
 import { Header } from './components/Header';
 import { Toolbar } from './components/Toolbar';
@@ -21,7 +21,7 @@ import { KskActionModal } from './components/KskActionModal';
 import { AddKskModal } from './components/AddKskModal';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { ToastContainer } from './components/ToastContainer';
-import { Copy, Plus, AlertCircle, Layers } from 'lucide-react';
+import { Copy, Plus, AlertCircle, Trash2, Calendar, Clock, Layers, ShieldCheck, X } from 'lucide-react';
 
 export default function App() {
   // 1. Core State with Storage Persistence
@@ -52,6 +52,7 @@ export default function App() {
   const [targetQuickAddCategoryId, setTargetQuickAddCategoryId] = useState<string | undefined>(undefined);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [actionModalItem, setActionModalItem] = useState<KSKItem | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
 
   // Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -111,7 +112,6 @@ export default function App() {
       if (list) {
         list.push(item);
       } else {
-        // In case category was deleted or unknown
         map.set(item.categoryId, [item]);
       }
     });
@@ -140,14 +140,14 @@ export default function App() {
 
   const handleShiftChange = (newShift: ShiftType) => {
     setSelectedShift(newShift);
-    addToast(`Shift changed to ${newShift.split('-->')[0].trim()}...`, 'info');
+    addToast(`Shift changed to ${getShiftDisplayName(newShift)}`, 'info');
   };
 
   const handleSetCurrentShift = () => {
     const detected = getCurrentShiftAndDate();
     setSelectedDate(detected.date);
     setSelectedShift(detected.shift);
-    addToast(`Current shift activated: ${detected.date} (${detected.shift})`, 'success');
+    addToast(`Current shift activated: ${detected.date} (${getShiftDisplayName(detected.shift)})`, 'success');
   };
 
   const handleAddKsk = (kskNumbers: string[], categoryId: string, description?: string) => {
@@ -196,7 +196,7 @@ export default function App() {
 
   const handleMoveKsk = (item: KSKItem, targetCategoryId: string) => {
     const targetCategory = categories.find((c) => c.id === targetCategoryId);
-    const targetName = targetCategory ? targetCategory.name : 'new category';
+    const targetName = targetCategory ? targetCategory.name : 'new emplacement';
 
     setAllKsks((prev) =>
       prev.map((k) =>
@@ -226,7 +226,30 @@ export default function App() {
     };
 
     setCategories((prev) => [...prev, newCat]);
-    addToast(`Category "${name}" created successfully`, 'success');
+    addToast(`Emplacement "${name}" created successfully`, 'success');
+  };
+
+  const handleRequestRemoveCategory = (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    if (!cat) return;
+    setDeletingCategory(cat);
+  };
+
+  const handleConfirmRemoveCategory = () => {
+    if (!deletingCategory) return;
+    const catId = deletingCategory.id;
+    const catName = deletingCategory.name;
+
+    // Delete category and all its KSK items
+    setCategories((prev) => prev.filter((c) => c.id !== catId));
+    setAllKsks((prev) => prev.filter((k) => k.categoryId !== catId));
+
+    if (categoryFilter === catId) {
+      setCategoryFilter('ALL');
+    }
+
+    setDeletingCategory(null);
+    addToast(`Emplacement "${catName}" removed successfully`, 'info');
   };
 
   const handleQuickAdd = (categoryId: string) => {
@@ -235,7 +258,6 @@ export default function App() {
   };
 
   const handleCopyFromPreviousShift = () => {
-    // Find any existing KSKs from another session
     const otherKsks = allKsks.filter(
       (k) => !(k.date === selectedDate && k.shift === selectedShift)
     );
@@ -245,7 +267,6 @@ export default function App() {
       return;
     }
 
-    // Group by session to find the most recent
     const latestOtherKsk = otherKsks[otherKsks.length - 1];
     const sourceSessionKsks = otherKsks.filter(
       (k) => k.date === latestOtherKsk.date && k.shift === latestOtherKsk.shift
@@ -265,7 +286,7 @@ export default function App() {
 
     setAllKsks((prev) => [...prev, ...copiedItems]);
     addToast(
-      `Copied ${copiedItems.length} KSKs from session (${latestOtherKsk.date} • ${latestOtherKsk.shift})`,
+      `Copied ${copiedItems.length} KSKs from session (${latestOtherKsk.date} • ${getShiftDisplayName(latestOtherKsk.shift)})`,
       'success'
     );
   };
@@ -280,7 +301,7 @@ export default function App() {
     setIsExporting(false);
 
     if (success) {
-      addToast('Dashboard exported as PNG successfully', 'success');
+      addToast('Dashboard exported as landscape PNG successfully', 'success');
     } else {
       addToast('Failed to export image. Please try again.', 'error');
     }
@@ -295,45 +316,118 @@ export default function App() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
-      {/* Main App Container */}
+      {/* Main App Container (used for screen and landscape PNG export) */}
       <div id="dashboard-container" className="flex-1 flex flex-col bg-white">
         
-        {/* Header */}
-        <Header
-          selectedDate={selectedDate}
-          selectedShift={selectedShift}
-          totalKsks={currentSessionKsks.length}
-          onDateChange={handleDateChange}
-          onShiftChange={handleShiftChange}
-          onSetCurrentShift={handleSetCurrentShift}
-        />
+        {/* 1. Screen Header (Visible on Web App) */}
+        <div className="screen-only">
+          <Header
+            selectedDate={selectedDate}
+            selectedShift={selectedShift}
+            totalKsks={currentSessionKsks.length}
+            onDateChange={handleDateChange}
+            onShiftChange={handleShiftChange}
+            onSetCurrentShift={handleSetCurrentShift}
+          />
+        </div>
+
+        {/* 2. Professional Export Header (Active only during Image Export & Print) */}
+        <div className="export-only print:block mb-5 pb-4 border-b-2 border-slate-800">
+          <div className="flex items-center justify-between gap-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black font-industrial text-xl shadow-xs">
+                K
+              </div>
+              <div>
+                <h1 className="text-2xl font-black font-industrial tracking-wider text-black uppercase">
+                  KSK AREA – HARNESS / HT FOLLOW UP
+                </h1>
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">
+                  Live Production Tracking Board
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-black tracking-wider uppercase font-industrial flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                OFFICIAL PRODUCTION RECORD
+              </span>
+            </div>
+          </div>
+
+          {/* Export Session Info Grid */}
+          <div className="grid grid-cols-4 gap-3 pt-2">
+            <div className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 flex items-center gap-2.5">
+              <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-500">Production Date</div>
+                <div className="text-sm font-black font-mono text-slate-900">{selectedDate}</div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-500">Active Shift</div>
+                <div className="text-xs font-black text-slate-900 leading-tight">
+                  {getShiftDisplayName(selectedShift)}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 flex items-center gap-2.5">
+              <Layers className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-500">Total KSKs</div>
+                <div className="text-sm font-black font-mono text-emerald-700">
+                  {currentSessionKsks.length} Units
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                #
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-500">Emplacements</div>
+                <div className="text-sm font-black font-mono text-slate-900">
+                  {categories.length} Zones
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content Area */}
         <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col gap-4">
           
-          {/* Action Toolbar */}
-          <Toolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            displayMode={displayMode}
-            onDisplayModeChange={setDisplayMode}
-            selectedCategoryFilter={categoryFilter}
-            onCategoryFilterChange={setCategoryFilter}
-            categories={categories}
-            matchCount={searchMatchCount}
-            isExporting={isExporting}
-            onOpenAddKsk={() => {
-              setTargetQuickAddCategoryId(undefined);
-              setIsAddKskOpen(true);
-            }}
-            onOpenAddCategory={() => setIsAddCategoryOpen(true)}
-            onExportPng={handleExportPng}
-            onPrint={handlePrint}
-          />
+          {/* Action Toolbar (Hidden during export) */}
+          <div className="screen-only no-print no-export">
+            <Toolbar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              displayMode={displayMode}
+              onDisplayModeChange={setDisplayMode}
+              selectedCategoryFilter={categoryFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              categories={categories}
+              matchCount={searchMatchCount}
+              isExporting={isExporting}
+              onOpenAddKsk={() => {
+                setTargetQuickAddCategoryId(undefined);
+                setIsAddKskOpen(true);
+              }}
+              onOpenAddCategory={() => setIsAddCategoryOpen(true)}
+              onExportPng={handleExportPng}
+              onPrint={handlePrint}
+            />
+          </div>
 
-          {/* Empty Session Helper Notice (if 0 items in selected session) */}
+          {/* Empty Session Helper Notice (Screen only) */}
           {currentSessionKsks.length === 0 && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm no-print animate-in fade-in">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm no-print no-export screen-only animate-in fade-in">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
                   <AlertCircle className="w-5 h-5" />
@@ -342,7 +436,7 @@ export default function App() {
                   <p className="font-bold text-slate-900">No KSK records in this session yet</p>
                   <p className="text-xs text-slate-600 font-medium">
                     Session: <span className="font-mono font-bold text-slate-900">{selectedDate}</span> •{' '}
-                    <span className="font-mono font-bold text-blue-700">{selectedShift}</span>
+                    <span className="font-bold text-blue-700">{getShiftDisplayName(selectedShift)}</span>
                   </p>
                 </div>
               </div>
@@ -365,24 +459,10 @@ export default function App() {
             </div>
           )}
 
-          {/* Clean Export/Print Header Banner (only visible during export/print) */}
-          <div className="hidden print:block mb-4 pb-2 border-b border-slate-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold font-industrial tracking-wider text-black">
-                  KSK AREA – HARNESS / HT FOLLOW UP
-                </h1>
-                <p className="text-xs text-slate-700 font-medium">
-                  Date: {selectedDate} | Shift: {selectedShift} | Total KSKs: {currentSessionKsks.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dynamic Grid of Category Cards */}
+          {/* Dynamic Grid of Emplacement / Category Cards */}
           <div
             id="category-cards-grid"
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 items-start"
           >
             {visibleCategories.map((category) => {
               const items = ksksByCategory.get(category.id) || [];
@@ -395,9 +475,16 @@ export default function App() {
                   searchQuery={searchQuery}
                   onKskClick={(item) => setActionModalItem(item)}
                   onQuickAdd={handleQuickAdd}
+                  onRemoveCategory={handleRequestRemoveCategory}
                 />
               );
             })}
+          </div>
+
+          {/* Professional Export Footer Watermark (Active in Export and Print) */}
+          <div className="export-only print:block mt-6 pt-3 border-t border-slate-300 text-center text-xs text-slate-500 flex items-center justify-between font-mono">
+            <span>KSK AREA – HARNESS / HT FOLLOW UP</span>
+            <span>Generated: {new Date().toLocaleString()}</span>
           </div>
 
         </main>
@@ -415,14 +502,14 @@ export default function App() {
         onAddKsk={handleAddKsk}
       />
 
-      {/* Add Category Modal */}
+      {/* Add Emplacement Modal */}
       <AddCategoryModal
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
         onAddCategory={handleAddCategory}
       />
 
-      {/* KSK Action (Edit / Move / Remove) Modal */}
+      {/* KSK Action (Edit KSK Number / Move / Remove) Modal */}
       <KskActionModal
         item={actionModalItem}
         categories={categories}
@@ -432,6 +519,69 @@ export default function App() {
         onMoveKsk={handleMoveKsk}
         onRemoveKsk={handleRemoveKsk}
       />
+
+      {/* Delete Emplacement Confirmation Modal */}
+      {deletingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden text-slate-900 flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-rose-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-rose-100 text-rose-700 border border-rose-200">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black font-industrial tracking-wider text-rose-900">
+                    REMOVE EMPLACEMENT
+                  </h2>
+                  <p className="text-xs text-slate-600 font-medium">
+                    Confirm deletion of this category column
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDeletingCategory(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3 text-sm text-slate-700">
+              <p>
+                Are you sure you want to remove the emplacement{' '}
+                <strong className="font-bold text-slate-900 uppercase font-industrial text-base">
+                  &ldquo;{deletingCategory.name}&rdquo;
+                </strong>
+                ?
+              </p>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>
+                  Any KSK items currently assigned to this emplacement in this session will also be removed.
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDeletingCategory(null)}
+                className="px-4 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-sm transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRemoveCategory}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Emplacement</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

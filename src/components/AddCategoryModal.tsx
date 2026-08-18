@@ -51,10 +51,10 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-black font-industrial tracking-wider text-black">
-                CREATE CUSTOM CATEGORY
+                ADD EMPLACEMENT
               </h2>
               <p className="text-xs text-slate-600 font-medium">
-                Add a new tracking status column to the KSK dashboard
+                Add a new tracking emplacement column to the KSK dashboard
               </p>
             </div>
           </div>
@@ -75,10 +75,10 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
             </div>
           )}
 
-          {/* Category Name */}
+          {/* Emplacement Name */}
           <div>
             <label htmlFor="cat-name-input" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Category Name *
+              Emplacement Name *
             </label>
             <input
               id="cat-name-input"
@@ -109,7 +109,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
           {/* Color Selection */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Category Color Accent *
+              Emplacement Color Accent *
             </label>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {AVAILABLE_COLORS.map((c) => (
@@ -135,7 +135,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
           {/* Icon Selection */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Category Icon *
+              Emplacement Icon *
             </label>
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-36 overflow-y-auto p-1.5 bg-slate-50 rounded-xl border border-slate-200">
               {AVAILABLE_ICONS.map((iconItem) => {
@@ -170,7 +170,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
               className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
-              <span>CREATE CATEGORY</span>
+              <span>+ CREATE EMPLACEMENT</span>
             </button>
             <button
               type="button"

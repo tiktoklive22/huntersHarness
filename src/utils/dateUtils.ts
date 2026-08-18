@@ -6,6 +6,32 @@ export const SHIFT_OPTIONS: ShiftType[] = [
   '22h00 --> 06h00',
 ];
 
+export function getShiftDisplayName(shift: ShiftType): string {
+  switch (shift) {
+    case '06h00 --> 14h00':
+      return 'Shift 1 (06h00 → 14h00)';
+    case '14h00 --> 22h00':
+      return 'Shift 2 (14h00 → 22h00)';
+    case '22h00 --> 06h00':
+      return 'Shift 3 (22h00 → 06h00)';
+    default:
+      return String(shift).replace('-->', '→');
+  }
+}
+
+export function getShiftShortName(shift: ShiftType): string {
+  switch (shift) {
+    case '06h00 --> 14h00':
+      return 'Shift 1';
+    case '14h00 --> 22h00':
+      return 'Shift 2';
+    case '22h00 --> 06h00':
+      return 'Shift 3';
+    default:
+      return shift;
+  }
+}
+
 /**
  * Format a Date object to DD/MM/YYYY
  */
