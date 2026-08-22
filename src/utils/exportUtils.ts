@@ -22,15 +22,14 @@ export async function exportDashboardToPng(
     node.style.minWidth = '1440px';
     node.style.maxWidth = '1440px';
 
-    // Wait a frame to let any rendering settle
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Wait a brief tick to let layout adjust
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
-    // Generate high-resolution PNG (pixelRatio 2) in landscape orientation
-    // Using fontEmbedCSS: '' and skipFonts: true prevents browser CORS SecurityError when reading document.styleSheets
+    // Generate high-resolution PNG (pixelRatio 2.2 for crisp report-level clarity)
     const dataUrl = await toPng(node, {
       quality: 0.98,
-      backgroundColor: '#FFFFFF',
-      pixelRatio: 2,
+      backgroundColor: '#F8FAFC',
+      pixelRatio: 2.2,
       cacheBust: true,
       skipFonts: true,
       fontEmbedCSS: '',
@@ -63,5 +62,3 @@ export async function exportDashboardToPng(
     node.style.maxWidth = originalMaxWidth;
   }
 }
-
-

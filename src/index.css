@@ -17,7 +17,7 @@
 @media print {
   @page {
     size: landscape;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   body {
@@ -31,9 +31,12 @@
     display: none !important;
   }
 
-  .print-clean {
-    border: none !important;
-    box-shadow: none !important;
+  .screen-only {
+    display: none !important;
+  }
+
+  .export-only {
+    display: block !important;
   }
 }
 
@@ -53,32 +56,14 @@
   background: #94a3b8;
 }
 
-/* Export Mode fixed landscape styles */
+/* Export Mode fixed landscape styles for PNG capture */
 .export-landscape-mode {
   width: 1440px !important;
   min-width: 1440px !important;
   max-width: 1440px !important;
-  background-color: #FFFFFF !important;
+  background-color: #F8FAFC !important;
   padding: 24px !important;
   box-sizing: border-box !important;
-}
-
-.export-landscape-mode #category-cards-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-  width: 100% !important;
-}
-
-.export-landscape-mode main {
-  width: 1392px !important;
-  max-width: 1392px !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
-}
-
-.export-only {
-  display: none;
 }
 
 .export-landscape-mode .export-only {
@@ -89,3 +74,6 @@
   display: none !important;
 }
 
+.export-only {
+  display: none;
+}

@@ -18,6 +18,7 @@ import {
   Layers,
   Sparkles,
   Zap,
+  Home as HomeIcon,
 } from 'lucide-react';
 
 export const AVAILABLE_COLORS = [
@@ -37,6 +38,7 @@ export const AVAILABLE_COLORS = [
 ];
 
 export const AVAILABLE_ICONS = [
+  { id: 'home', label: 'Home / Base', component: HomeIcon },
   { id: 'check', label: 'Checkmark', component: Check },
   { id: 'check-circle', label: 'Check Circle', component: CheckCircle2 },
   { id: 'clock', label: 'Clock / Wait', component: Clock },
